@@ -1,0 +1,1 @@
+A nodejs application that alerts a user anytime a reddit thread is updated. The application starts a server on localhost:3000 and allows reddit posts to be tracked from there.

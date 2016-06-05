@@ -1,0 +1,168 @@
+<!doctype html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7" lang=""> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8" lang=""> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9" lang=""> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang=""> <!--<![endif]-->
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <title>Reddit Notifier</title>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="apple-touch-icon" href="apple-touch-icon.png">
+
+
+        <!-- CSS -->
+        <link rel="stylesheet" href="css/bootstrap.min.css">
+        <link rel="stylesheet" href="css/bootstrap-theme.min.css">
+        <link rel="stylesheet" href="css/main.css">
+        <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/css/toastr.min.css">
+
+
+        <!-- Third Party Libraries -->
+        <script src="js/vendor/modernizr-2.8.3-respond-1.4.2.min.js"></script>
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+        <script src="js/vendor/bootstrap.min.js"></script>
+        <script src="https://fb.me/react-0.14.7.js"></script>
+        <script src="https://fb.me/react-dom-0.14.7.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.23/browser.min.js"></script>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/js/toastr.min.js"></script>
+    </head>
+    <body>
+        <!--[if lt IE 8]>
+            <p class="browserupgrade">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
+        <![endif]-->
+    <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#">Reddit Notifier</a>
+        </div>
+      </div>
+    </nav>
+
+
+    <div class="container">
+      <h2>
+        Tracked Threads
+      </h2>
+
+      <div id="trackedThreadsContainer"></div>
+    </div>
+
+
+      <hr>
+
+      <footer>
+
+      </footer>
+    </div> <!-- /container -->        
+        <script src="js/main.js"></script>
+
+        <script type="text/javascript">
+        </script>
+
+        <script type="text/babel">
+          var ThreadsManagerTrackBtnComponent = React.createClass({
+            render: function() {
+              return (
+                <button className="btn btn-success btn-sm" onClick={this.props.onClickTrackThread}>
+                  <i className="glyphicon glyphicon-plus"></i>&nbsp;
+                  Track Thread
+                </button>
+              );
+            }
+          });
+
+          var ThreadsManagerComponent = React.createClass({
+              /* Custom Methods */
+              loadData: function() {
+                this.serverRequest = $.get("/trackedThreads", function (result) {
+                  this.setState({items: result.data});
+                }.bind(this));
+              },
+
+              trackThread: function() {
+                var self = this;
+
+                var urlToTrack = window.prompt("Please enter the url to track.", "http://");
+                if(!urlToTrack) {
+                  return;
+                }
+
+                util.post("/trackedThreads", {
+                  url: urlToTrack
+                }, function(result) {
+                  self.loadData();
+                  toastr.success("The url is now being tracked.", 'Success');
+                }, function(err) {
+                  toastr.error(err.responseJSON.errorMessage, 'Error')
+                })
+              },
+
+              delete: function(rowId) {
+
+
+              },
+
+              getInitialState: function(){
+                  return {
+                      items: []
+                  }
+              },
+              componentDidMount: function() {
+                this.loadData();
+              },
+              render: function(){
+                  return (
+                    <div>
+                      <ThreadsManagerTrackBtnComponent onClickTrackThread={this.trackThread}/>
+                      <table className="table table-striped">
+                        <thead>
+                          <tr>
+                            <th>URL</th>
+                            <th>Date Added</th>
+                            <th>Tracking</th>
+                            <th>&nbsp;</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {
+                            this.state.items.map(function(curItem) {
+                              return <tr key={curItem.rowid}>
+                                  <td>
+                                      <a href={curItem.url} target="_blank">
+                                        {curItem.url.substring(curItem.url.indexOf('/r/'))}
+                                      </a>
+                                  </td>
+                                  <td>{new Date(curItem.dateAdded).toLocaleString()}</td>
+                                  <td>{curItem.tracking ? "Yes" : "No"}</td>
+                                  <td>
+                                    <button className="btn btn-danger btn-sm" onClick={this.delete.bind(this, curItem.rowid)}>
+                                      <i className="glyphicon glyphicon-remove"></i>&nbsp;
+                                      Delete
+                                    </button>
+                                    &nbsp;
+
+                                  </td>
+                                </tr>
+                            }.bind(this))
+                           }
+                         </tbody>
+                      </table>
+                    </div>
+                  );
+              }
+          });
+
+          React.render(<ThreadsManagerComponent />, document.getElementById('trackedThreadsContainer'));
+        </script>
+
+
+    </body>
+</html>
